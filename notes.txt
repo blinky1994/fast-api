@@ -1,0 +1,4 @@
+venv/Scripts/activate
+pip install fastapi[all]
+pip freeze // Show packages
+uvicorn app.main:app --port 8001 --reload
