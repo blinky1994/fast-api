@@ -1,14 +1,13 @@
 from random import randrange
 from fastapi import Body, FastAPI, Response, status, HTTPException, Depends
-from typing import Optional
-from bson import ObjectId
 import psycopg2
 from psycopg2.extras import RealDictCursor
 import time
 from . import models
 from .database import engine, get_db
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, session
 from . import schemas
+from typing import List
 
 models.Base.metadata.create_all(bind=engine)
 
@@ -32,21 +31,20 @@ while True:
 def default():
     return {'message':'Hello World'}
 
-@app.get('/posts', status_code=status.HTTP_201_CREATED)
+@app.get('/posts', response_model=List[schemas.Post])
 def get_posts(db: Session = Depends(get_db)):
     posts = db.query(models.Post).all()
-    return { 'data': posts }
+    print(posts)
+    return posts
 
-@app.post('/createpost')
+@app.post('/createpost', status_code=status.HTTP_201_CREATED, response_model=schemas.Post)
 def create_post(post: schemas.PostCreate, db: Session = Depends(get_db)):
     post_dict = post.model_dump()
     new_post = models.Post(**post_dict)
     db.add(new_post)
     db.commit()
     db.refresh(new_post)
-    return { 
-        'data' : new_post
-    }
+    return new_post
 
 def find_post(id: int):
     for p in posts:
@@ -65,12 +63,12 @@ def get_latest_post():
 def raise404Exception(id: int):
     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f'post with id: {id} was not found')
 
-@app.get('/posts/{id}')
+@app.get('/posts/{id}', response_model=schemas.Post)
 def get_post(id: int, db: Session = Depends(get_db)):
     post = db.query(models.Post).filter(models.Post.id == id).first()
     if not post:
         raise404Exception(id)
-    return { 'post_detail': post }
+    return post
 
 @app.delete('/posts/{id}', status_code=status.HTTP_204_NO_CONTENT)
 def delete_post(id: int, db: Session = Depends(get_db)):
@@ -97,5 +95,5 @@ def update_post(id: int, post: schemas.PostCreate, db: Session = Depends(get_db)
     post_query.update(post_dict, synchronize_session=False)
     db.commit()
     
-    return { 'status': f'post with id: {id} has been updated', 'data': post_query.first()}
+    return post_query.first()
         
