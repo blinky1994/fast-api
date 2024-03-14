@@ -1,19 +1,20 @@
 from random import randrange
-from fastapi import Body, FastAPI, Response, status, HTTPException, Depends
+from fastapi import Body, FastAPI, status, HTTPException, Depends
 import psycopg2
 from psycopg2.extras import RealDictCursor
 import time
 from . import models
 from .database import engine, get_db
-from sqlalchemy.orm import Session, session
+from sqlalchemy.orm import Session
 from . import schemas
 from typing import List
+from .utils import hash
+
 
 models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
         
-
 
 while True:
     try: 
@@ -97,3 +98,18 @@ def update_post(id: int, post: schemas.PostCreate, db: Session = Depends(get_db)
     
     return post_query.first()
         
+@app.post('/users', status_code=status.HTTP_201_CREATED, response_model=schemas.UserOut)
+def create_user(user:schemas.UserCreate, db: Session = Depends(get_db)):
+    
+    user.password = hash(user.password)
+    new_user = models.User(**user.model_dump())
+    
+    user_query = db.query(models.User).filter(models.User.email == user.email)
+
+    if user_query.first() != None:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=f'There is an issue creating this user')
+        
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+    return new_user
