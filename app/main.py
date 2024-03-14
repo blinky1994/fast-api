@@ -4,7 +4,7 @@ from psycopg2.extras import RealDictCursor
 import time
 from . import models
 from .database import engine
-from .routers import user, post
+from .routers import user, post, auth
 models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
@@ -20,6 +20,7 @@ while True:
         print(f'Error: {error}')
         time.sleep(2)
 
+app.include_router(auth.router)        
 app.include_router(user.router)        
 app.include_router(post.router)        
 
