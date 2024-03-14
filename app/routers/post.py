@@ -4,15 +4,15 @@ from sqlalchemy.orm import Session
 from .. import schemas, models
 from typing import List
 
-router = APIRouter()
+router = APIRouter(prefix='/posts')
 
-@router.get('/posts', response_model=List[schemas.Post])
+@router.get('/', response_model=List[schemas.Post])
 def get_posts(db: Session = Depends(get_db)):
     posts = db.query(models.Post).all()
     print(posts)
     return posts
 
-@router.post('/createpost', status_code=status.HTTP_201_CREATED, response_model=schemas.Post)
+@router.post('/', status_code=status.HTTP_201_CREATED, response_model=schemas.Post)
 def create_post(post: schemas.PostCreate, db: Session = Depends(get_db)):
     post_dict = post.model_dump()
     new_post = models.Post(**post_dict)
@@ -31,21 +31,21 @@ def find_post_index(id: int):
         if (p['id']) == id:
             return i
       
-@router.get('/posts/latest')
+@router.get('/latest')
 def get_latest_post():
     return 'todo'
 
 def raise404Exception(id: int):
     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f'post with id: {id} was not found')
 
-@router.get('/posts/{id}', response_model=schemas.Post)
+@router.get('/{id}', response_model=schemas.Post)
 def get_post(id: int, db: Session = Depends(get_db)):
     post = db.query(models.Post).filter(models.Post.id == id).first()
     if not post:
         raise404Exception(id)
     return post
 
-@router.delete('/posts/{id}', status_code=status.HTTP_204_NO_CONTENT)
+@router.delete('/{id}', status_code=status.HTTP_204_NO_CONTENT)
 def delete_post(id: int, db: Session = Depends(get_db)):
     post_query = db.query(models.Post).filter(models.Post.id == id)
     
@@ -58,7 +58,7 @@ def delete_post(id: int, db: Session = Depends(get_db)):
     
     return { 'message': f'post with id: {id} has been deleted'}
         
-@router.put('/posts/{id}')
+@router.put('/{id}')
 def update_post(id: int, post: schemas.PostCreate, db: Session = Depends(get_db)):
     post_query = db.query(models.Post).filter(models.Post.id == id)
     post_dict = post.model_dump(exclude_unset=True)
