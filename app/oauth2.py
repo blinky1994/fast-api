@@ -9,13 +9,6 @@ from sqlalchemy.orm import Session
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl='/login')
 
-# SECRET KEY
-
-# Algorithm
-
-# Expiration Date
-
-
 SECRET_KEY = 'CA68B33287C65A81CBF7CEBE1733E'
 ALGORITHM = 'HS256'
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
